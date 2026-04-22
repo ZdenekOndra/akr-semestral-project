@@ -1,3 +1,1 @@
-hashlib
-python-Levenshtein
-tqdm
+bcrypt
