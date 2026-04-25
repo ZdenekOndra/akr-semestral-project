@@ -53,18 +53,27 @@ Tok dat v aplikaci: `main.py` → vytvoří testovací záznamy (`database.py`) 
 
 ### 5.2 Popis vstupů, výstupů a potřebných souborů
 
-**Vstupy:**
-- Žádný vstupní soubor není povinný – aplikace generuje testovací data interně.
-- Volitelně lze načíst vlastní slovník hesel funkcí `load_wordlist(filepath)` v modulu `attacker.py` (textový soubor, jedno heslo na řádek, kódování UTF-8).
-- Volitelně lze načíst nebo uložit databázi hashovaných hesel ve formátu `username:algorithm:salt:hash` funkcemi `save_database()` a `load_database()` v modulu `database.py`.
+**Vstupní soubory:**
+
+| Soubor | Popis | Povinný |
+|--------|-------|---------|
+| `requirements.txt` | Závislosti pro instalaci (`bcrypt`) | Ano |
+| `wordlist.txt` | Slovník 157 nejčastějších hesel pro slovníkový útok (UTF-8, jedno heslo na řádek) | Ne – aplikace má záložní interní seznam |
+| `passwords_sample.db` | Ukázková databáze 14 hashovaných hesel ve formátu `username:algorithm:salt:hash` | Ne – aplikace generuje testovací záznamy interně |
+
+Při spuštění aplikace jsou soubory `wordlist.txt` a `passwords_sample.db` automaticky detekovány a použity, pokud existují. Jinak se aplikace spustí s interně generovanými daty.
+
+Ukázka formátu `passwords_sample.db`:
+```
+alice:sha256:a3f1c9d2...:7b36223a...
+karl:bcrypt:$2b$10$...:$2b$10$...
+```
 
 **Výstupy:**
-- Všechny výsledky jsou vypisovány na standardní výstup (terminál) v průběhu výpočtu.
+- Všechny výsledky jsou vypisovány na standardní výstup (terminál) průběžně v reálném čase.
 - Výstup je strukturován do pěti sekcí: porovnání hashů, slovníkový útok, brute-force, rainbow tables, analýza složitosti.
 - Závěrečné shrnutí sumarizuje počet prolomených hesel a bezpečnostní doporučení.
-
-**Potřebné soubory:**
-- `requirements.txt` – specifikace závislostí (pouze knihovna `bcrypt`)
+- Žádný výstupní soubor není generován – výsledky jsou určeny pro přímé čtení v terminálu.
 
 ### 5.3 Popis implementovaných algoritmů
 
@@ -155,7 +164,7 @@ Pro každou útočnou metodu byl vytvořen set testovacích záznamů s definova
 
 Bcrypt je ~33 000× pomalejší než MD5/SHA, PBKDF2 ~6 600× pomalejší.
 
-**Slovníkový útok** (slovník 70 hesel):
+**Slovníkový útok** (slovník `wordlist.txt`, 157 hesel):
 
 | Algoritmus | Prolomeno | Rychlost |
 |-----------|----------|---------|
@@ -243,3 +252,190 @@ Pro sekci 5.5 je potřeba vytvořit alespoň 2 diagramy (draw.io, MS Visio, nebo
 
 **Diagram C – Vývojový diagram rainbow table útoku:**
 - Start → pro k od (délka_řetězce-1) do 0 → aplikuj reduce(k)...reduce(n-1) → end_candidate v tabulce? → Ano: projdi řetězec od start → ověř hash → Nalezeno/Ne → k--  → Nenalezeno
+
+---
+
+## Příloha – Reálný výstup programu
+
+*(Lze vložit do dokumentace jako přílohu nebo do sekce 6 jako ukázku výstupu)*
+*(Měřeno na: Apple M-series CPU, macOS, Python 3.14)*
+
+```
+=================================================================
+  SIMULACE ÚTOKŮ NA HESLA
+  BPC-AKR  |  Ondra, Makovička, Pokluda
+=================================================================
+
+=================================================================
+  1. POROVNÁNÍ HASHOVACÍCH FUNKCÍ
+=================================================================
+
+  Algoritmus            ms/hash      hashů/s  Bezpečnost
+  ----------------------------------------------------------
+  md5                     0.002       449261  KRITICKÁ  – kryptograficky zlomený
+  sha1                    0.002       472971  NÍZKÁ     – nevhodný pro hesla
+  sha256                  0.002       475221  STŘEDNÍ   – rychlý, nevhodný bez soli
+  sha512                  0.002       453242  STŘEDNÍ   – rychlý, nevhodný bez soli
+  bcrypt                 70.029           14  VYSOKÁ    – navržen pro hesla, cost factor
+  pbkdf2_sha256          13.932           72  VYSOKÁ    – 100 000 iterací, NIST doporučení
+
+  Klíčový poznatek: bcrypt/pbkdf2 jsou ~1 000–100 000× pomalejší
+  než MD5/SHA. To dramaticky zpomaluje brute-force útoky.
+
+=================================================================
+  2. SLOVNÍKOVÝ ÚTOK
+=================================================================
+
+  Wordlist: wordlist.txt (157 hesel)
+  Databáze: passwords_sample.db (14 záznamů)
+
+  --- sha256 + sůl ---
+
+  Výsledek: 10/10 prolomeno (100%)
+  Čas celkem: 0.1 ms
+  Pokusů: 103  |  Rychlost: 864,027 /s
+    [OK] password (sha256): 'password'  (0.000s)
+    [OK] letmein (sha256): 'letmein'  (0.000s)
+    [OK] monkey (sha256): 'monkey'  (0.000s)
+    [OK] dragon (sha256): 'dragon'  (0.000s)
+    [OK] sunshine (sha256): 'sunshine'  (0.000s)
+    [OK] admin (sha256): 'admin'  (0.000s)
+    [OK] root (sha256): 'root'  (0.000s)
+    [OK] welcome (sha256): 'welcome'  (0.000s)
+    [OK] test (sha256): 'test'  (0.000s)
+    [OK] abc123 (sha256): 'abc123'  (0.000s)
+
+  --- bcrypt ---
+
+  Výsledek: 3/3 prolomeno (100%)
+  Čas celkem: 917.4 ms
+  Pokusů: 13  |  Rychlost: 14 /s
+    [OK] password (bcrypt): 'password'  (0.070s)
+    [OK] letmein (bcrypt): 'letmein'  (0.356s)
+    [OK] monkey (bcrypt): 'monkey'  (0.491s)
+
+  Rychlost sha256:  864,027 pokusů/s
+  Rychlost bcrypt:  14 pokusů/s
+  → Bcrypt je řádově pomalejší → slovníkový útok trvá mnohem déle.
+
+=================================================================
+  3. ÚTOK HRUBOU SILOU
+=================================================================
+
+  Znakový set: malá písmena + číslice (36 znaků)
+  Testovací hesla: ['ab', 'aa', 'a1', 'zz', 'abc', 'a1b']  (délka 2–3)
+  Max. délka hledání: 4 znaky
+
+  --- md5 ---
+
+  Výsledek: 6/6 prolomeno (100%)
+  Čas celkem: 5.4 ms
+  Pokusů: 4,778  |  Rychlost: 888,630 /s
+    [OK] ab (md5): 'ab'  (0.000s)
+    [OK] aa (md5): 'aa'  (0.000s)
+    [OK] a1 (md5): 'a1'  (0.000s)
+    [OK] zz (md5): 'zz'  (0.001s)
+    [OK] abc (md5): 'abc'  (0.001s)
+    [OK] a1b (md5): 'a1b'  (0.002s)
+
+  --- sha256 ---
+
+  Výsledek: 6/6 prolomeno (100%)
+  Čas celkem: 4.9 ms
+  Pokusů: 4,778  |  Rychlost: 975,723 /s
+    [OK] ab (sha256): 'ab'  (0.000s)
+    [OK] aa (sha256): 'aa'  (0.000s)
+    [OK] a1 (sha256): 'a1'  (0.000s)
+    [OK] zz (sha256): 'zz'  (0.001s)
+    [OK] abc (sha256): 'abc'  (0.001s)
+    [OK] a1b (sha256): 'a1b'  (0.002s)
+
+  --- bcrypt ---
+
+  Výsledek: 6/6 prolomeno (100%)
+  Čas celkem: 5.6 min
+  Pokusů: 4,778  |  Rychlost: 14 /s
+    [OK] ab (bcrypt): 'ab'  (2.671s)
+    [OK] aa (bcrypt): 'aa'  (2.588s)
+    [OK] a1 (bcrypt): 'a1'  (4.548s)
+    [OK] zz (bcrypt): 'zz'  (67.687s)
+    [OK] abc (bcrypt): 'abc'  (97.100s)
+    [OK] a1b (bcrypt): 'a1b'  (162.479s)
+
+  Závislost počtu kombinací na délce hesla (36 znaků):
+   Délka       Kombinace     čas MD5 (odhad)          čas SHA256
+  --------------------------------------------------------------
+       1              36              0.0 ms              0.0 ms
+       2           1,296              1.5 ms              1.3 ms
+       3          46,656             52.5 ms             47.8 ms
+       4       1,679,616              1.89 s              1.72 s
+       5      60,466,176             1.1 min             1.0 min
+       6   2,176,782,336            40.8 min            37.2 min
+       7  78,364,164,096             1.0 dní              22.3 h
+       8  2,821,109,907,456            36.7 dní            33.5 dní
+
+=================================================================
+  4. RAINBOW TABLES ÚTOK
+=================================================================
+
+  Prostor hesel: 26 znaků, délka 3 → 17,576 hesel
+  Parametry tabulky: 1 500 řetězců × délka 100
+  Hashování: MD5 bez soli
+
+  Sestavuji rainbow table...
+  Hotovo za 2.07 s  |  338 řetězců uloženo
+
+  Testovací hesla: ['abc', 'xyz', 'aaa', 'mno', 'zzz', 'bcd', 'fgh', 'rst']
+
+  Prolomeno: 6/8
+    MD5('abc') = 900150983cd24fb0...  →  'abc'  (0.006s)
+    MD5('xyz') = d16fb36f0911f878...  →  'xyz'  (0.001s)
+    MD5('aaa') = 47bce5c74f589f48...  →  NEÚSPĚCH  (0.014s)
+    MD5('mno') = d1cf6a6090003989...  →  NEÚSPĚCH  (0.013s)
+    MD5('zzz') = f3abb86bd34cf4d5...  →  'zzz'  (0.002s)
+    MD5('bcd') = d4b7c284882ca9e2...  →  'bcd'  (0.002s)
+    MD5('fgh') = 0f98df87c7440c04...  →  'fgh'  (0.002s)
+    MD5('rst') = d674dfcd8b4db676...  →  'rst'  (0.001s)
+
+  --- Vliv soli na rainbow tables ---
+  Bez soli: stejné heslo → stejný hash → lze použít rainbow table.
+  Se solí:  každé heslo dostane unikátní sůl → 'heslo+sůl1' a 'heslo+sůl2'
+            dávají zcela jiné hashe. Tabulka by musela být
+            předpočítána pro každou sůl → prakticky nemožné.
+
+=================================================================
+  5. SLOŽITOST HESEL A ODHADOVANÁ DOBA PROLOMENÍ
+=================================================================
+
+  Heslo                          Délka  Entropie             MD5          SHA256          bcrypt
+  --------------------------------------------------------------------------------------------
+  ab                                 2      9.4b          1.5 ms          1.4 ms         47.34 s
+  abc                                3     14.1b         39.1 ms         37.0 ms        20.5 min
+  abcd                               4     18.8b          1.02 s        961.6 ms           8.9 h
+  abcde                              5     23.5b         26.45 s         25.00 s         9.6 dní
+  password                           8     37.6b         5.4 dní         5.1 dní    4.64e+02 let
+  abc123                             6     31.0b           1.3 h           1.3 h    4.83e+00 let
+  Abc123                             6     35.7b         1.5 dní         1.4 dní    1.26e+02 let
+  P@ssw0rd                           8     52.4b    4.30e+02 let    4.07e+02 let    1.35e+07 let
+  Tr0ub4dor&3                       11     72.1b    3.57e+08 let    3.38e+08 let    1.12e+13 let
+  correct-horse-battery-staple      28    164.0b    1.68e+36 let    1.59e+36 let    5.28e+40 let
+
+  Entropie E = n × log₂(k),  kde n = délka, k = velikost znakového prostoru.
+  Časy jsou odhady pro průměrný CPU; GPU je 100–1000× rychlejší.
+  Bcrypt s cost factorem 10 ≈ 100–200 ms/hash → výrazně zpomaluje útok.
+
+=================================================================
+  SHRNUTÍ VÝSLEDKŮ
+=================================================================
+  Slovníkový útok (sha256): 10/10 prolomeno
+  Slovníkový útok (bcrypt): 3/3 prolomeno
+  Hrubá síla (sha256):      6/6 prolomeno
+  Rainbow tables (MD5):     6/8 prolomeno
+
+  DOPORUČENÍ PRO BEZPEČNÉ UKLÁDÁNÍ HESEL:
+  • Používat bcrypt nebo PBKDF2 (pomalé funkce odolné vůči GPU útokům)
+  • Vždy přidat unikátní kryptografickou sůl pro každé heslo
+  • Minimální délka hesla 12 znaků s kombinací typů znaků
+  • Zakázat nejběžnější hesla (slovníkový útok)
+  • MD5 a SHA-1 jsou pro ukládání hesel zcela nevhodné
+```
