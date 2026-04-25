@@ -19,14 +19,6 @@ def generate_salt(size=16):
 def hash_password(password, algorithm='sha256', salt=None):
     """
     Hashuje heslo s náhodnou solí.
-
-    Args:
-        password:  Heslo v čistém textu.
-        algorithm: Hashovací algoritmus (viz ALGORITHMS).
-        salt:      Volitelná sůl; pokud None, generuje se nová.
-
-    Returns:
-        Tuple (hash_hex, salt_str).
     """
     if algorithm == 'bcrypt':
         bcrypt_salt = bcrypt.gensalt(rounds=10)
@@ -54,13 +46,6 @@ def hash_password(password, algorithm='sha256', salt=None):
 def hash_unsalted(password, algorithm='md5'):
     """
     Hashuje heslo BEZ soli – používá se pro demo rainbow tables.
-
-    Args:
-        password:  Heslo v čistém textu.
-        algorithm: Hashovací algoritmus.
-
-    Returns:
-        Hash jako hex řetězec.
     """
     h = hashlib.new(algorithm)
     h.update(password.encode('utf-8'))
@@ -70,15 +55,6 @@ def hash_unsalted(password, algorithm='md5'):
 def verify_password(password, stored_hash, salt, algorithm='sha256'):
     """
     Ověří heslo vůči uloženému hashi.
-
-    Args:
-        password:     Heslo v čistém textu.
-        stored_hash:  Uložený hash.
-        salt:         Sůl použitá při hashování.
-        algorithm:    Hashovací algoritmus.
-
-    Returns:
-        True pokud heslo odpovídá, jinak False.
     """
     if algorithm == 'bcrypt':
         try:

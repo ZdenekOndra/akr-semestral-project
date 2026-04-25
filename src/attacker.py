@@ -33,13 +33,6 @@ def load_wordlist(filepath):
 def dictionary_attack(entries, wordlist):
     """
     Slovníkový útok – zkouší hesla ze slovníku.
-
-    Args:
-        entries:  List DB záznamů (username, algorithm, salt, hash).
-        wordlist: List kandidátních hesel.
-
-    Returns:
-        List výsledků – každý dict: entry, found, elapsed, attempts.
     """
     results = []
     for entry in entries:
@@ -64,14 +57,6 @@ def dictionary_attack(entries, wordlist):
 def brute_force_attack(entries, charset=None, max_length=4):
     """
     Útok hrubou silou – systematicky zkouší všechny kombinace.
-
-    Args:
-        entries:    List DB záznamů.
-        charset:    Znakový set (default: malá písmena + číslice).
-        max_length: Maximální délka testovaného hesla.
-
-    Returns:
-        List výsledků – každý dict: entry, found, elapsed, attempts.
     """
     if charset is None:
         charset = string.ascii_lowercase + string.digits

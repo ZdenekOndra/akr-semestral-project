@@ -12,13 +12,6 @@ from src.hashers import hash_password, ALGORITHMS
 def measure_hash_speed(algorithm, n=200):
     """
     Změří průměrnou dobu hashování a počet hashů za sekundu.
-
-    Args:
-        algorithm: Hashovací algoritmus.
-        n:         Počet měření.
-
-    Returns:
-        Dict: algorithm, ms_per_hash, hashes_per_sec.
     """
     start = time.time()
     for _ in range(n):
@@ -34,9 +27,6 @@ def measure_hash_speed(algorithm, n=200):
 def password_entropy(password):
     """
     Vypočítá entropii hesla: E = n * log2(k), kde k je velikost znakového prostoru.
-
-    Returns:
-        Entropie v bitech.
     """
     k = 0
     if any(c in string.ascii_lowercase for c in password):
@@ -87,9 +77,6 @@ def format_time(seconds):
 def print_attack_summary(results, title):
     """
     Vypíše přehled výsledků útoku.
-
-    Returns:
-        Dict: cracked, total, elapsed, attempts.
     """
     total = len(results)
     cracked = sum(1 for r in results if r['found'] is not None)
