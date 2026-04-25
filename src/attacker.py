@@ -54,15 +54,18 @@ def dictionary_attack(entries, wordlist):
     return results
 
 
-def brute_force_attack(entries, charset=None, max_length=4):
+def brute_force_attack(entries, charset=None, max_length=4, progress_every=500):
     """
     Útok hrubou silou – systematicky zkouší všechny kombinace.
     """
+    import sys
     if charset is None:
         charset = string.ascii_lowercase + string.digits
 
     results = []
     for entry in entries:
+        alg = entry.get('algorithm', '?')
+        user = entry.get('username', '?')
         start = time.time()
         found = None
         attempts = 0
@@ -73,10 +76,17 @@ def brute_force_attack(entries, charset=None, max_length=4):
             for combo in itertools.product(charset, repeat=length):
                 attempts += 1
                 candidate = ''.join(combo)
+                if attempts % progress_every == 0:
+                    elapsed = time.time() - start
+                    rate = attempts / elapsed if elapsed > 0 else 0
+                    print(f"\r    [{alg}] {user}: pokus #{attempts:,}  ({rate:,.0f}/s)  aktuálně: '{candidate}'",
+                          end='', flush=True)
                 if verify_password(candidate, entry['hash'], entry['salt'], entry['algorithm']):
                     found = candidate
                     done = True
                     break
+        if attempts >= progress_every:
+            print()  # newline after progress line
         elapsed = time.time() - start
         results.append({
             'entry': entry,

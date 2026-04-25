@@ -7,6 +7,7 @@ Spuštění: python main.py
 """
 
 import string
+import sys
 import time
 
 from src.hashers import ALGORITHMS, hash_unsalted
@@ -27,9 +28,13 @@ from src.analyzer import (
 # ---------------------------------------------------------------------------
 
 def section(title):
-    print("\n" + "=" * 65)
-    print(f"  {title}")
-    print("=" * 65)
+    print("\n" + "=" * 65, flush=True)
+    print(f"  {title}", flush=True)
+    print("=" * 65, flush=True)
+
+
+def step(msg):
+    print(f"\n  >>> {msg}", flush=True)
 
 
 # ---------------------------------------------------------------------------
@@ -38,8 +43,8 @@ def section(title):
 
 def run_hash_comparison():
     section("1. POROVNÁNÍ HASHOVACÍCH FUNKCÍ")
-    print(f"\n  {'Algoritmus':<18} {'ms/hash':>10} {'hashů/s':>12}  Bezpečnost")
-    print("  " + "-" * 58)
+    print(f"\n  {'Algoritmus':<18} {'ms/hash':>10} {'hashů/s':>12}  Bezpečnost", flush=True)
+    print("  " + "-" * 58, flush=True)
 
     security = {
         'md5':          'KRITICKÁ  – kryptograficky zlomený',
@@ -55,17 +60,20 @@ def run_hash_comparison():
     slow = [a for a in ALGORITHMS if a in ('bcrypt', 'pbkdf2_sha256')]
 
     for alg in fast:
+        print(f"  Měřím {alg}...", end='\r', flush=True)
         speeds[alg] = measure_hash_speed(alg, n=500)
     for alg in slow:
+        print(f"  Měřím {alg} (pomalý, chvíli čekejte)...", end='\r', flush=True)
         speeds[alg] = measure_hash_speed(alg, n=5)
 
+    print(" " * 60, end='\r')  # clear progress line
     for alg in ALGORITHMS:
         r = speeds[alg]
-        print(f"  {alg:<18} {r['ms_per_hash']:>10.3f} {r['hashes_per_sec']:>12.0f}  {security[alg]}")
+        print(f"  {alg:<18} {r['ms_per_hash']:>10.3f} {r['hashes_per_sec']:>12.0f}  {security[alg]}", flush=True)
 
     print()
-    print("  Klíčový poznatek: bcrypt/pbkdf2 jsou ~1 000–100 000× pomalejší")
-    print("  než MD5/SHA. To dramaticky zpomaluje brute-force útoky.")
+    print("  Klíčový poznatek: bcrypt/pbkdf2 jsou ~1 000–100 000× pomalejší", flush=True)
+    print("  než MD5/SHA. To dramaticky zpomaluje brute-force útoky.", flush=True)
 
     return speeds
 
@@ -86,14 +94,16 @@ def run_dictionary_attack():
 
     wordlist = COMMON_PASSWORDS
 
-    print(f"\n  Slovník: {len(wordlist)} hesel")
-    print(f"  Testovací záznamy: {len(entries_sha)} (sha256) + {len(entries_bcrypt)} (bcrypt)")
+    print(f"\n  Slovník: {len(wordlist)} hesel", flush=True)
+    print(f"  Testovací záznamy: {len(entries_sha)} (sha256) + {len(entries_bcrypt)} (bcrypt)", flush=True)
 
-    print("\n  --- sha256 + sůl ---")
+    print("\n  --- sha256 + sůl ---", flush=True)
+    step("Spouštím slovníkový útok na sha256...")
     r_sha = dictionary_attack(entries_sha, wordlist)
     s_sha = print_attack_summary(r_sha, 'sha256')
 
-    print("\n  --- bcrypt ---")
+    print("\n  --- bcrypt ---", flush=True)
+    step("Spouštím slovníkový útok na bcrypt (pomalejší)...")
     r_bc = dictionary_attack(entries_bcrypt, wordlist)
     s_bc = print_attack_summary(r_bc, 'bcrypt')
 
@@ -124,8 +134,12 @@ def run_brute_force():
     for alg in ['md5', 'sha256', 'bcrypt']:
         entries = [create_entry(p, p, alg) for p in short_passwords]
         max_len = 3 if alg == 'bcrypt' else 4  # bcrypt je pomalý
+        print(f"\n  --- {alg} ---", flush=True)
+        if alg == 'bcrypt':
+            step("bcrypt je pomalý (~14 hashů/s) – průběh vidíte níže:")
+        else:
+            step(f"Spouštím brute-force útok ({alg})...")
         r = brute_force_attack(entries, charset=charset, max_length=max_len)
-        print(f"\n  --- {alg} ---")
         summary = print_attack_summary(r, alg)
         results[alg] = summary
 
@@ -158,11 +172,11 @@ def run_rainbow_tables():
     print(f"  Hashování: MD5 bez soli")
     print()
 
-    print("  Sestavuji rainbow table...")
+    step("Sestavuji rainbow table (výpočet řetězců)...")
     t0 = time.time()
     table = build_table(num_chains=1500, chain_length=CHAIN_LENGTH)
     build_time = time.time() - t0
-    print(f"  Hotovo za {build_time:.2f} s  |  {len(table)} řetězců uloženo")
+    print(f"  Hotovo za {build_time:.2f} s  |  {len(table)} řetězců uloženo", flush=True)
 
     # Testovací hesla – 3 malá písmena (celý prostor pokryt s ~99 % pravděpodobností)
     test_pwds = ['abc', 'xyz', 'aaa', 'mno', 'zzz', 'bcd', 'fgh', 'rst']
