@@ -6,13 +6,14 @@ Autoři: Zdeněk Ondra, Lukáš Makovička, Jiří Pokluda
 Spuštění: python main.py
 """
 
+import os
 import string
 import sys
 import time
 
 from src.hashers import ALGORITHMS, hash_unsalted
-from src.database import create_entry
-from src.attacker import COMMON_PASSWORDS, dictionary_attack, brute_force_attack
+from src.database import create_entry, load_database
+from src.attacker import COMMON_PASSWORDS, dictionary_attack, brute_force_attack, load_wordlist
 from src.rainbow import (
     CHAIN_LENGTH, PASSWORD_LENGTH, CHARSET,
     build_table, rainbow_attack, _hash,
@@ -85,14 +86,29 @@ def run_hash_comparison():
 def run_dictionary_attack():
     section("2. SLOVNÍKOVÝ ÚTOK")
 
-    # Testovací databáze: běžná + méně běžná hesla, různé algoritmy
-    entries_sha = [create_entry(p, p, 'sha256') for p in
-                   ['password', 'letmein', 'monkey', 'dragon', 'sunshine',
-                    'admin', 'root', 'welcome', 'test', 'abc123']]
-    entries_bcrypt = [create_entry(p, p, 'bcrypt') for p in
-                      ['password', 'letmein', 'monkey']]
+    # Načti wordlist ze souboru, nebo použij interní záložní seznam
+    WORDLIST_FILE = 'wordlist.txt'
+    if os.path.isfile(WORDLIST_FILE):
+        wordlist = load_wordlist(WORDLIST_FILE)
+        print(f"\n  Wordlist: {WORDLIST_FILE} ({len(wordlist)} hesel)", flush=True)
+    else:
+        wordlist = COMMON_PASSWORDS
+        print(f"\n  Wordlist: interní seznam ({len(wordlist)} hesel)", flush=True)
 
-    wordlist = COMMON_PASSWORDS
+    # Načti ukázkovou DB ze souboru, nebo vytvoř testovací záznamy
+    DB_FILE = 'passwords_sample.db'
+    if os.path.isfile(DB_FILE):
+        all_entries = load_database(DB_FILE)
+        entries_sha   = [e for e in all_entries if e['algorithm'] in ('sha256', 'md5', 'sha512')]
+        entries_bcrypt = [e for e in all_entries if e['algorithm'] == 'bcrypt']
+        print(f"  Databáze: {DB_FILE} ({len(all_entries)} záznamů)", flush=True)
+    else:
+        entries_sha = [create_entry(p, p, 'sha256') for p in
+                       ['password', 'letmein', 'monkey', 'dragon', 'sunshine',
+                        'admin', 'root', 'welcome', 'test', 'abc123']]
+        entries_bcrypt = [create_entry(p, p, 'bcrypt') for p in
+                          ['password', 'letmein', 'monkey']]
+        print(f"  Databáze: interní testovací záznamy", flush=True)
 
     print(f"\n  Slovník: {len(wordlist)} hesel", flush=True)
     print(f"  Testovací záznamy: {len(entries_sha)} (sha256) + {len(entries_bcrypt)} (bcrypt)", flush=True)
