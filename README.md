@@ -4,12 +4,7 @@ Autoři: Zdeněk Ondra, Lukáš Makovička, Jiří Pokluda
 
 ## Popis projektu
 
-Aplikace simuluje reálné metody útoku na hashovaná hesla a vyhodnocuje odolnost různých hashovacích algoritmů. Implementovány jsou slovníkový útok, útok hrubou silou (brute-force) a útok pomocí rainbow tables. Součástí je i analýza závislosti doby prolomení na složitosti hesla.
-
-## Požadavky
-
-- **Python 3.10+**
-- Knihovna `bcrypt`
+Aplikace simuluje reálné metody útoku na hashovaná hesla a vyhodnocuje odolnost různých hashovacích algoritmů. Implementovány jsou slovníkový útok, útok hrubou silou a útok pomocí rainbow tables. Součástí je i analýza závislosti doby prolomení na složitosti hesla.
 
 ## Instalace
 
@@ -17,13 +12,22 @@ Aplikace simuluje reálné metody útoku na hashovaná hesla a vyhodnocuje odoln
 pip install -r requirements.txt
 ```
 
+## Vstupní soubory
+
+| Soubor | Popis |
+|--------|-------|
+| `wordlist.txt` | Slovník hesel pro slovníkový útok (jedno heslo na řádek) |
+| `passwords_sample.db` | Databáze hashovaných hesel ve formátu `username:algorithm:salt:hash` |
+
 ## Spuštění
 
 ```bash
 python3 main.py
 ```
 
-Program automaticky projde všemi pěti sekcemi a průběžně vypisuje výsledky:
+Program se při spuštění zeptá na cesty k wordlistu a databázi. Stisknutím Enter se použijí výchozí soubory (`wordlist.txt`, `passwords_sample.db`).
+
+Poté automaticky projde všemi pěti sekcemi:
 
 1. Porovnání hashovacích funkcí (MD5, SHA-1, SHA-256, SHA-512, bcrypt, PBKDF2)
 2. Slovníkový útok (sha256 a bcrypt)
@@ -31,7 +35,7 @@ Program automaticky projde všemi pěti sekcemi a průběžně vypisuje výsledk
 4. Rainbow tables útok (MD5 bez soli)
 5. Analýza složitosti hesel a odhadovaná doba prolomení
 
-> **Poznámka:** Sekce s bcrypt brute-force trvá cca 5–6 minut (bcrypt je záměrně pomalý – ~14 hashů/s). Průběh útoku je průběžně vypisován na obrazovku.
+Sekce s bcrypt brute-force trvá cca 5–6 minut (bcrypt je záměrně pomalý – ~14 hashů/s).
 
 ## Struktura projektu
 
