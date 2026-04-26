@@ -1,14 +1,9 @@
-"""
-Modul pro slovníkový a brute-force útok na hashovaná hesla.
-"""
-
 import itertools
 import string
 import time
 
 from src.hashers import verify_password
 
-# Nejčastější hesla (základ slovníku)
 COMMON_PASSWORDS = [
     'password', '123456', 'qwerty', 'admin', 'letmein', 'welcome',
     'monkey', 'dragon', 'master', 'sunshine', 'princess', 'football',
@@ -25,15 +20,11 @@ COMMON_PASSWORDS = [
 
 
 def load_wordlist(filepath):
-    """Načte slovník ze souboru (jedno heslo na řádek)."""
     with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
         return [line.strip() for line in f if line.strip()]
 
 
 def dictionary_attack(entries, wordlist):
-    """
-    Slovníkový útok – zkouší hesla ze slovníku.
-    """
     results = []
     for entry in entries:
         start = time.time()
@@ -55,9 +46,6 @@ def dictionary_attack(entries, wordlist):
 
 
 def brute_force_attack(entries, charset=None, max_length=4, progress_every=500):
-    """
-    Útok hrubou silou – systematicky zkouší všechny kombinace.
-    """
     import sys
     if charset is None:
         charset = string.ascii_lowercase + string.digits
@@ -86,7 +74,7 @@ def brute_force_attack(entries, charset=None, max_length=4, progress_every=500):
                     done = True
                     break
         if attempts >= progress_every:
-            print()  # newline after progress line
+            print()
         elapsed = time.time() - start
         results.append({
             'entry': entry,

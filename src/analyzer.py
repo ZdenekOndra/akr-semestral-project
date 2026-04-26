@@ -1,7 +1,3 @@
-"""
-Modul pro analýzu výsledků – rychlost hashování, entropie, odhad doby prolomení.
-"""
-
 import math
 import string
 import time
@@ -10,9 +6,6 @@ from src.hashers import hash_password, ALGORITHMS
 
 
 def measure_hash_speed(algorithm, n=200):
-    """
-    Změří průměrnou dobu hashování a počet hashů za sekundu.
-    """
     start = time.time()
     for _ in range(n):
         hash_password('testpassword123!', algorithm)
@@ -25,9 +18,6 @@ def measure_hash_speed(algorithm, n=200):
 
 
 def password_entropy(password):
-    """
-    Vypočítá entropii hesla: E = n * log2(k), kde k je velikost znakového prostoru.
-    """
     k = 0
     if any(c in string.ascii_lowercase for c in password):
         k += 26
@@ -43,7 +33,6 @@ def password_entropy(password):
 
 
 def brute_force_charset_size(password):
-    """Odhadne velikost znakového prostoru pro dané heslo."""
     k = 0
     if any(c in string.ascii_lowercase for c in password):
         k += 26
@@ -57,7 +46,6 @@ def brute_force_charset_size(password):
 
 
 def format_time(seconds):
-    """Formátuje počet sekund do čitelné podoby."""
     if seconds < 1:
         return f"{seconds*1000:.1f} ms"
     if seconds < 60:
@@ -75,9 +63,6 @@ def format_time(seconds):
 
 
 def print_attack_summary(results, title):
-    """
-    Vypíše přehled výsledků útoku.
-    """
     total = len(results)
     cracked = sum(1 for r in results if r['found'] is not None)
     elapsed = sum(r['elapsed'] for r in results)

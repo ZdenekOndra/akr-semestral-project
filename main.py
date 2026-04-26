@@ -23,10 +23,6 @@ from src.analyzer import (
 )
 
 
-# ---------------------------------------------------------------------------
-# Pomocné funkce
-# ---------------------------------------------------------------------------
-
 def section(title):
     print("\n" + "=" * 65, flush=True)
     print(f"  {title}", flush=True)
@@ -36,10 +32,6 @@ def section(title):
 def step(msg):
     print(f"\n  >>> {msg}", flush=True)
 
-
-# ---------------------------------------------------------------------------
-# 1. Porovnání hashovacích funkcí
-# ---------------------------------------------------------------------------
 
 def run_hash_comparison():
     section("1. POROVNÁNÍ HASHOVACÍCH FUNKCÍ")
@@ -66,7 +58,7 @@ def run_hash_comparison():
         print(f"  Měřím {alg} (pomalý, chvíli čekejte)...", end='\r', flush=True)
         speeds[alg] = measure_hash_speed(alg, n=5)
 
-    print(" " * 60, end='\r')  # clear progress line
+    print(" " * 60, end='\r')
     for alg in ALGORITHMS:
         r = speeds[alg]
         print(f"  {alg:<18} {r['ms_per_hash']:>10.3f} {r['hashes_per_sec']:>12.0f}  {security[alg]}", flush=True)
@@ -77,10 +69,6 @@ def run_hash_comparison():
 
     return speeds
 
-
-# ---------------------------------------------------------------------------
-# 2. Slovníkový útok
-# ---------------------------------------------------------------------------
 
 def run_dictionary_attack(wordlist_file, db_file):
     section("2. SLOVNÍKOVÝ ÚTOK")
@@ -115,14 +103,10 @@ def run_dictionary_attack(wordlist_file, db_file):
     return s_sha, s_bc
 
 
-# ---------------------------------------------------------------------------
-# 3. Útok hrubou silou
-# ---------------------------------------------------------------------------
-
 def run_brute_force():
     section("3. ÚTOK HRUBOU SILOU")
 
-    charset = string.ascii_lowercase + string.digits  # 36 znaků
+    charset = string.ascii_lowercase + string.digits
     short_passwords = ['ab', 'aa', 'a1', 'zz', 'abc', 'a1b']
 
     print(f"\n  Znakový set: malá písmena + číslice ({len(charset)} znaků)")
@@ -132,7 +116,7 @@ def run_brute_force():
     results = {}
     for alg in ['md5', 'sha256', 'bcrypt']:
         entries = [create_entry(p, p, alg) for p in short_passwords]
-        max_len = 3 if alg == 'bcrypt' else 4  # bcrypt je pomalý
+        max_len = 3 if alg == 'bcrypt' else 4
         print(f"\n  --- {alg} ---", flush=True)
         if alg == 'bcrypt':
             step("bcrypt je pomalý (~14 hashů/s) – průběh vidíte níže:")
@@ -159,10 +143,6 @@ def run_brute_force():
     return results
 
 
-# ---------------------------------------------------------------------------
-# 4. Rainbow tables
-# ---------------------------------------------------------------------------
-
 def run_rainbow_tables():
     section("4. RAINBOW TABLES ÚTOK")
 
@@ -177,7 +157,6 @@ def run_rainbow_tables():
     build_time = time.time() - t0
     print(f"  Hotovo za {build_time:.2f} s  |  {len(table)} řetězců uloženo", flush=True)
 
-    # Testovací hesla – 3 malá písmena (celý prostor pokryt s ~99 % pravděpodobností)
     test_pwds = ['abc', 'xyz', 'aaa', 'mno', 'zzz', 'bcd', 'fgh', 'rst']
     entries = [{'username': p, 'hash': _hash(p), 'password': p} for p in test_pwds]
 
@@ -191,7 +170,6 @@ def run_rainbow_tables():
         pwd = r['entry']['password']
         print(f"    MD5('{pwd}') = {r['entry']['hash'][:16]}...  →  {status}  ({r['elapsed']:.3f}s)")
 
-    # Demonstrace proč sůl zabrání rainbow tables
     print()
     print("  --- Vliv soli na rainbow tables ---")
     print("  Bez soli: stejné heslo → stejný hash → lze použít rainbow table.")
@@ -202,10 +180,6 @@ def run_rainbow_tables():
     return {'cracked': cracked, 'total': len(results), 'build_time': build_time}
 
 
-# ---------------------------------------------------------------------------
-# 5. Analýza složitosti hesel
-# ---------------------------------------------------------------------------
-
 def run_complexity_analysis(speeds):
     section("5. SLOŽITOST HESEL A ODHADOVANÁ DOBA PROLOMENÍ")
 
@@ -214,16 +188,9 @@ def run_complexity_analysis(speeds):
     bcrypt_rate = speeds['bcrypt']['hashes_per_sec']
 
     test_passwords = [
-        'ab',
-        'abc',
-        'abcd',
-        'abcde',
-        'password',
-        'abc123',
-        'Abc123',
-        'P@ssw0rd',
-        'Tr0ub4dor&3',
-        'correct-horse-battery-staple',
+        'ab', 'abc', 'abcd', 'abcde',
+        'password', 'abc123', 'Abc123', 'P@ssw0rd',
+        'Tr0ub4dor&3', 'correct-horse-battery-staple',
     ]
 
     print(f"\n  {'Heslo':<30} {'Délka':>5} {'Entropie':>9}  {'MD5':>14}  {'SHA256':>14}  {'bcrypt':>14}")
@@ -243,10 +210,6 @@ def run_complexity_analysis(speeds):
     print("  Časy jsou odhady pro průměrný CPU; GPU je 100–1000× rychlejší.")
     print("  Bcrypt s cost factorem 10 ≈ 100–200 ms/hash → výrazně zpomaluje útok.")
 
-
-# ---------------------------------------------------------------------------
-# Hlavní funkce
-# ---------------------------------------------------------------------------
 
 def main():
     print("=" * 65)

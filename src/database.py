@@ -1,15 +1,7 @@
-"""
-Modul pro správu databáze hashovaných hesel.
-Formát záznamu: username:algorithm:salt:hash
-"""
-
 from src.hashers import hash_password
 
 
 def create_entry(username, password, algorithm='sha256'):
-    """
-    Vytvoří záznam databáze pro dané heslo.
-    """
     hashed, salt = hash_password(password, algorithm)
     return {
         'username': username,
@@ -21,17 +13,12 @@ def create_entry(username, password, algorithm='sha256'):
 
 
 def save_database(entries, filepath):
-    """Uloží záznamy do souboru."""
     with open(filepath, 'w', encoding='utf-8') as f:
         for e in entries:
             f.write(f"{e['username']}:{e['algorithm']}:{e['salt']}:{e['hash']}\n")
 
 
 def load_database(filepath):
-    """
-    Načte záznamy ze souboru.
-
-    """
     entries = []
     with open(filepath, 'r', encoding='utf-8') as f:
         for line in f:
