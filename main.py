@@ -86,25 +86,13 @@ def run_hash_comparison():
 def run_dictionary_attack(wordlist_file, db_file):
     section("2. SLOVNÍKOVÝ ÚTOK")
 
-    if os.path.isfile(wordlist_file):
-        wordlist = load_wordlist(wordlist_file)
-        print(f"\n  Wordlist: {wordlist_file} ({len(wordlist)} hesel)", flush=True)
-    else:
-        wordlist = COMMON_PASSWORDS
-        print(f"\n  Wordlist: interní seznam ({len(wordlist)} hesel)", flush=True)
+    wordlist = load_wordlist(wordlist_file)
+    print(f"\n  Wordlist: {wordlist_file} ({len(wordlist)} hesel)", flush=True)
 
-    if os.path.isfile(db_file):
-        all_entries = load_database(db_file)
-        entries_sha   = [e for e in all_entries if e['algorithm'] in ('sha256', 'md5', 'sha512')]
-        entries_bcrypt = [e for e in all_entries if e['algorithm'] == 'bcrypt']
-        print(f"  Databáze: {db_file} ({len(all_entries)} záznamů)", flush=True)
-    else:
-        entries_sha = [create_entry(p, p, 'sha256') for p in
-                       ['password', 'letmein', 'monkey', 'dragon', 'sunshine',
-                        'admin', 'root', 'welcome', 'test', 'abc123']]
-        entries_bcrypt = [create_entry(p, p, 'bcrypt') for p in
-                          ['password', 'letmein', 'monkey']]
-        print(f"  Databáze: interní testovací záznamy", flush=True)
+    all_entries = load_database(db_file)
+    entries_sha   = [e for e in all_entries if e['algorithm'] in ('sha256', 'md5', 'sha512')]
+    entries_bcrypt = [e for e in all_entries if e['algorithm'] == 'bcrypt']
+    print(f"  Databáze: {db_file} ({len(all_entries)} záznamů)", flush=True)
 
     print(f"\n  Slovník: {len(wordlist)} hesel", flush=True)
     print(f"  Testovací záznamy: {len(entries_sha)} (sha256) + {len(entries_bcrypt)} (bcrypt)", flush=True)
@@ -268,8 +256,18 @@ def main():
     print("=" * 65)
 
     print()
-    wordlist_file = input("  Cesta k wordlistu    (Enter = wordlist.txt):        ").strip() or 'wordlist.txt'
-    db_file       = input("  Cesta k databázi     (Enter = passwords_sample.db): ").strip() or 'passwords_sample.db'
+
+    while True:
+        wordlist_file = input("  Cesta k wordlistu    (Enter = wordlist.txt):        ").strip() or 'wordlist.txt'
+        if os.path.isfile(wordlist_file):
+            break
+        print(f"  Soubor '{wordlist_file}' nenalezen, zkuste znovu.")
+
+    while True:
+        db_file = input("  Cesta k databázi     (Enter = passwords_sample.db): ").strip() or 'passwords_sample.db'
+        if os.path.isfile(db_file):
+            break
+        print(f"  Soubor '{db_file}' nenalezen, zkuste znovu.")
 
     speeds = run_hash_comparison()
     s_sha, s_bc = run_dictionary_attack(wordlist_file, db_file)
