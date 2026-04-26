@@ -83,25 +83,21 @@ def run_hash_comparison():
 # 2. Slovníkový útok
 # ---------------------------------------------------------------------------
 
-def run_dictionary_attack():
+def run_dictionary_attack(wordlist_file, db_file):
     section("2. SLOVNÍKOVÝ ÚTOK")
 
-    # Načti wordlist ze souboru, nebo použij interní záložní seznam
-    WORDLIST_FILE = 'wordlist.txt'
-    if os.path.isfile(WORDLIST_FILE):
-        wordlist = load_wordlist(WORDLIST_FILE)
-        print(f"\n  Wordlist: {WORDLIST_FILE} ({len(wordlist)} hesel)", flush=True)
+    if os.path.isfile(wordlist_file):
+        wordlist = load_wordlist(wordlist_file)
+        print(f"\n  Wordlist: {wordlist_file} ({len(wordlist)} hesel)", flush=True)
     else:
         wordlist = COMMON_PASSWORDS
         print(f"\n  Wordlist: interní seznam ({len(wordlist)} hesel)", flush=True)
 
-    # Načti ukázkovou DB ze souboru, nebo vytvoř testovací záznamy
-    DB_FILE = 'passwords_sample.db'
-    if os.path.isfile(DB_FILE):
-        all_entries = load_database(DB_FILE)
+    if os.path.isfile(db_file):
+        all_entries = load_database(db_file)
         entries_sha   = [e for e in all_entries if e['algorithm'] in ('sha256', 'md5', 'sha512')]
         entries_bcrypt = [e for e in all_entries if e['algorithm'] == 'bcrypt']
-        print(f"  Databáze: {DB_FILE} ({len(all_entries)} záznamů)", flush=True)
+        print(f"  Databáze: {db_file} ({len(all_entries)} záznamů)", flush=True)
     else:
         entries_sha = [create_entry(p, p, 'sha256') for p in
                        ['password', 'letmein', 'monkey', 'dragon', 'sunshine',
@@ -271,8 +267,12 @@ def main():
     print("  BPC-AKR  |  Ondra, Makovička, Pokluda")
     print("=" * 65)
 
+    print()
+    wordlist_file = input("  Cesta k wordlistu    (Enter = wordlist.txt):        ").strip() or 'wordlist.txt'
+    db_file       = input("  Cesta k databázi     (Enter = passwords_sample.db): ").strip() or 'passwords_sample.db'
+
     speeds = run_hash_comparison()
-    s_sha, s_bc = run_dictionary_attack()
+    s_sha, s_bc = run_dictionary_attack(wordlist_file, db_file)
     brute_results = run_brute_force()
     rainbow_results = run_rainbow_tables()
     run_complexity_analysis(speeds)
