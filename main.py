@@ -165,7 +165,7 @@ def run_rainbow_tables():
         print(f"    MD5('{pwd}') = {r['entry']['hash'][:16]}...  →  {status}  ({r['elapsed']:.3f}s)")
 
     print()
-    print("  Proč sůl zabrání rainbow tables:")
+    print("  Vliv solení na obranu proti rainbow tables:")
     print("  Bez soli dává stejné heslo vždy stejný hash – tabulka funguje.")
     print("  Se solí dostane každé heslo unikátní přídavek, takže hashe jsou různé")
     print("  i pro stejná hesla. Předpočítaná tabulka je k ničemu.")
@@ -201,7 +201,7 @@ def run_complexity_analysis(speeds):
     print()
     print("  Entropie E = n × log₂(k),  kde n = délka, k = velikost znakového prostoru.")
     print("  Časy jsou odhady pro průměrný CPU – GPU je 100 až 1000× rychlejší.")
-    print("  Bcrypt prodražuje každý pokus ~70 ms, což násobí celkovou dobu útoku.")
+    print("  Bcrypt protahuje každý pokus o ~70 ms, což násobí celkovou dobu útoku.")
 
 
 def main():
@@ -238,9 +238,9 @@ def main():
     print()
     print("  DOPORUČENÍ PRO BEZPEČNÉ UKLÁDÁNÍ HESEL:")
     print("  • Používat bcrypt nebo PBKDF2 – pomalé funkce odolné vůči GPU útokům")
-    print("  • Každé heslo osolit unikátní kryptografickou solí")
+    print("  • Ke každému heslu přidávat kryptografickou sůl pro snížení účinnosti výpočetných útoků")
     print("  • Minimální délka hesla 12 znaků s kombinací různých typů znaků")
-    print("  • Zakázat nejběžnější hesla – chrání před slovníkovými útoky")
+    print("  • Zakázat běžná a velmi krátká hesla, zvolenou politiku svědomitě dodržovat")
     print("  • MD5 a SHA-1 jsou pro ukládání hesel zcela nevhodné")
 
 
