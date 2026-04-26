@@ -8,12 +8,11 @@ Spuštění: python main.py
 
 import os
 import string
-import sys
 import time
 
-from src.hashers import ALGORITHMS, hash_unsalted
+from src.hashers import ALGORITHMS
 from src.database import create_entry, load_database
-from src.attacker import COMMON_PASSWORDS, dictionary_attack, brute_force_attack, load_wordlist
+from src.attacker import dictionary_attack, brute_force_attack, load_wordlist
 from src.rainbow import (
     CHAIN_LENGTH, PASSWORD_LENGTH, CHARSET,
     build_table, rainbow_attack, _hash,
