@@ -29,10 +29,6 @@ def section(title):
     print("=" * 65, flush=True)
 
 
-def step(msg):
-    print(f"\n  >>> {msg}", flush=True)
-
-
 def run_hash_comparison():
     section("1. POROVNÁNÍ HASHOVACÍCH FUNKCÍ")
     print(f"\n  {'Algoritmus':<18} {'ms/hash':>10} {'hashů/s':>12}  Bezpečnost", flush=True)
@@ -55,7 +51,7 @@ def run_hash_comparison():
         print(f"  Měřím {alg}...", end='\r', flush=True)
         speeds[alg] = measure_hash_speed(alg, n=500)
     for alg in slow:
-        print(f"  Měřím {alg} (pomalý, chvíli čekejte)...", end='\r', flush=True)
+        print(f"  Měřím {alg}, chvíli čekejte...", end='\r', flush=True)
         speeds[alg] = measure_hash_speed(alg, n=5)
 
     print(" " * 60, end='\r')
@@ -64,8 +60,8 @@ def run_hash_comparison():
         print(f"  {alg:<18} {r['ms_per_hash']:>10.3f} {r['hashes_per_sec']:>12.0f}  {security[alg]}", flush=True)
 
     print()
-    print("  Klíčový poznatek: bcrypt/pbkdf2 jsou ~1 000–100 000× pomalejší", flush=True)
-    print("  než MD5/SHA. To dramaticky zpomaluje brute-force útoky.", flush=True)
+    print("  Bcrypt a PBKDF2 jsou záměrně pomalé – až 33 000× pomalejší než MD5 nebo SHA.", flush=True)
+    print("  To výrazně ztěžuje útočníkovi systematické zkoušení hesel.", flush=True)
 
     return speeds
 
@@ -80,25 +76,23 @@ def run_dictionary_attack(wordlist_file, db_file):
     entries_sha   = [e for e in all_entries if e['algorithm'] in ('sha256', 'md5', 'sha512')]
     entries_bcrypt = [e for e in all_entries if e['algorithm'] == 'bcrypt']
     print(f"  Databáze: {db_file} ({len(all_entries)} záznamů)", flush=True)
+    print(f"  Testovací záznamy: {len(entries_sha)} (sha/md5) + {len(entries_bcrypt)} (bcrypt)", flush=True)
 
-    print(f"\n  Slovník: {len(wordlist)} hesel", flush=True)
-    print(f"  Testovací záznamy: {len(entries_sha)} (sha256) + {len(entries_bcrypt)} (bcrypt)", flush=True)
-
-    print("\n  --- sha256 + sůl ---", flush=True)
-    step("Spouštím slovníkový útok na sha256...")
+    print("\n  --- SHA-256 + sůl ---", flush=True)
+    print("  Zkoušíme hesla ze slovníku...", flush=True)
     r_sha = dictionary_attack(entries_sha, wordlist)
     s_sha = print_attack_summary(r_sha, 'sha256')
 
     print("\n  --- bcrypt ---", flush=True)
-    step("Spouštím slovníkový útok na bcrypt (pomalejší)...")
+    print("  Zkoušíme hesla ze slovníku (bcrypt je pomalejší, chvíli to potrvá)...", flush=True)
     r_bc = dictionary_attack(entries_bcrypt, wordlist)
     s_bc = print_attack_summary(r_bc, 'bcrypt')
 
     print()
-    print(f"  Rychlost sha256:  {s_sha['attempts']/s_sha['elapsed']:,.0f} pokusů/s")
-    if s_bc['elapsed'] > 0:
-        print(f"  Rychlost bcrypt:  {s_bc['attempts']/s_bc['elapsed']:,.0f} pokusů/s")
-    print("  → Bcrypt je řádově pomalejší → slovníkový útok trvá mnohem déle.")
+    t_sha = format_time(s_sha['elapsed'])
+    t_bc  = format_time(s_bc['elapsed'])
+    print(f"  Čas SHA-256:  {t_sha}  |  Čas bcrypt: {t_bc}")
+    print(f"  Při slovníku s 14 miliony hesly by SHA-256 trvalo ~16 sekund, bcrypt přes 11 dní.")
 
     return s_sha, s_bc
 
@@ -111,7 +105,7 @@ def run_brute_force():
 
     print(f"\n  Znakový set: malá písmena + číslice ({len(charset)} znaků)")
     print(f"  Testovací hesla: {short_passwords}  (délka 2–3)")
-    print(f"  Max. délka hledání: 4 znaky")
+    print(f"  Maximální prohledávaná délka: 4 znaky")
 
     results = {}
     for alg in ['md5', 'sha256', 'bcrypt']:
@@ -119,9 +113,9 @@ def run_brute_force():
         max_len = 3 if alg == 'bcrypt' else 4
         print(f"\n  --- {alg} ---", flush=True)
         if alg == 'bcrypt':
-            step("bcrypt je pomalý (~14 hashů/s) – průběh vidíte níže:")
+            print("  Bcrypt je záměrně pomalý (~14 hashů/s), útok potrvá několik minut:", flush=True)
         else:
-            step(f"Spouštím brute-force útok ({alg})...")
+            print(f"  Zkoušíme všechny kombinace znaků ({alg})...", flush=True)
         r = brute_force_attack(entries, charset=charset, max_length=max_len)
         summary = print_attack_summary(r, alg)
         results[alg] = summary
@@ -151,7 +145,7 @@ def run_rainbow_tables():
     print(f"  Hashování: MD5 bez soli")
     print()
 
-    step("Sestavuji rainbow table (výpočet řetězců)...")
+    print("  Sestavujeme rainbow table...", flush=True)
     t0 = time.time()
     table = build_table(num_chains=1500, chain_length=CHAIN_LENGTH)
     build_time = time.time() - t0
@@ -171,11 +165,10 @@ def run_rainbow_tables():
         print(f"    MD5('{pwd}') = {r['entry']['hash'][:16]}...  →  {status}  ({r['elapsed']:.3f}s)")
 
     print()
-    print("  --- Vliv soli na rainbow tables ---")
-    print("  Bez soli: stejné heslo → stejný hash → lze použít rainbow table.")
-    print("  Se solí:  každé heslo dostane unikátní sůl → 'heslo+sůl1' a 'heslo+sůl2'")
-    print("            dávají zcela jiné hashe. Tabulka by musela být")
-    print("            předpočítána pro každou sůl → prakticky nemožné.")
+    print("  Proč sůl zabrání rainbow tables:")
+    print("  Bez soli dává stejné heslo vždy stejný hash – tabulka funguje.")
+    print("  Se solí dostane každé heslo unikátní přídavek, takže hashe jsou různé")
+    print("  i pro stejná hesla. Předpočítaná tabulka je k ničemu.")
 
     return {'cracked': cracked, 'total': len(results), 'build_time': build_time}
 
@@ -207,8 +200,8 @@ def run_complexity_analysis(speeds):
 
     print()
     print("  Entropie E = n × log₂(k),  kde n = délka, k = velikost znakového prostoru.")
-    print("  Časy jsou odhady pro průměrný CPU; GPU je 100–1000× rychlejší.")
-    print("  Bcrypt s cost factorem 10 ≈ 100–200 ms/hash → výrazně zpomaluje útok.")
+    print("  Časy jsou odhady pro průměrný CPU – GPU je 100 až 1000× rychlejší.")
+    print("  Bcrypt prodražuje každý pokus ~70 ms, což násobí celkovou dobu útoku.")
 
 
 def main():
@@ -244,10 +237,10 @@ def main():
     print(f"  Rainbow tables (MD5):     {rainbow_results['cracked']}/{rainbow_results['total']} prolomeno")
     print()
     print("  DOPORUČENÍ PRO BEZPEČNÉ UKLÁDÁNÍ HESEL:")
-    print("  • Používat bcrypt nebo PBKDF2 (pomalé funkce odolné vůči GPU útokům)")
-    print("  • Vždy přidat unikátní kryptografickou sůl pro každé heslo")
-    print("  • Minimální délka hesla 12 znaků s kombinací typů znaků")
-    print("  • Zakázat nejběžnější hesla (slovníkový útok)")
+    print("  • Používat bcrypt nebo PBKDF2 – pomalé funkce odolné vůči GPU útokům")
+    print("  • Každé heslo osolit unikátní kryptografickou solí")
+    print("  • Minimální délka hesla 12 znaků s kombinací různých typů znaků")
+    print("  • Zakázat nejběžnější hesla – chrání před slovníkovými útoky")
     print("  • MD5 a SHA-1 jsou pro ukládání hesel zcela nevhodné")
 
 
